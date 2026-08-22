@@ -1,4 +1,5 @@
 import os
+from aiohttp import web
 from pyrogram import Client, filters
 from pyrogram.types import Message
 
@@ -13,6 +14,19 @@ app = Client(
     bot_token=BOT_TOKEN
 )
 
+# Render के लिए डमी वेब सर्वर ताकि सर्विस बंद न हो
+async def handle(request):
+    return web.Response(text="Movie Bot is Running!")
+
+async def web_server():
+    server = web.Application()
+    server.router.add_get("/", handle)
+    runner = web.AppRunner(server)
+    await runner.setup()
+    port = int(os.environ.get("PORT", 8080))
+    site = web.TCPSite(runner, "0.0.0.0", port)
+    await site.start()
+
 @app.on_message(filters.command("start"))
 async def start_handler(client, message: Message):
     await message.reply_text("नमस्ते! मुझे कोई भी वीडियो या फाइल भेजें, मैं आपको उसका डायरेक्ट लिंक देता हूँ।")
@@ -23,7 +37,7 @@ async def link_generator(client, message: Message):
     file_name = media.file_name if hasattr(media, "file_name") else "video.mp4"
     
     file_path = await client.download_media(message)
-    app_url = os.environ.get("RENDER_EXTERNAL_URL", "https://your-app.koyeb.app")
+    app_url = os.environ.get("RENDER_EXTERNAL_URL", "https://movie-bot-7457.onrender.com")
     download_link = f"{app_url}/download/{file_name}"
     
     await message.reply_text(
@@ -32,4 +46,7 @@ async def link_generator(client, message: Message):
     )
 
 if __name__ == "__main__":
+    import asyncio
+    loop = asyncio.get_event_loop()
+    loop.create_task(web_server())
     app.run()
