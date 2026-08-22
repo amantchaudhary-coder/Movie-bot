@@ -7,7 +7,7 @@ from telegram.ext import ApplicationBuilder, ContextTypes, MessageHandler, filte
 # लॉगिंग सेट अप
 logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s', level=logging.INFO)
 
-BOT_TOKEN = "8937136224:AAET5jgO2qAK5TDuUHq6hBj_lcqHm2kGed4"
+BOT_TOKEN = "8937136224:AAET5jgO2qAK5TDuUHq6hBj_1cqHm2kGed4"
 
 # Render के लिए डमी वेब सर्वर ताकि सर्विस हमेशा चालू रहे
 async def handle(request):
