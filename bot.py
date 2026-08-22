@@ -7,15 +7,31 @@ from telegram.ext import ApplicationBuilder, ContextTypes, MessageHandler, filte
 # लॉगिंग सेट अप
 logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s', level=logging.INFO)
 
-BOT_TOKEN = "8937136224:AAET5jgO2qAK5TDuUHq6hBj_1cqHm2kGed4"
+BOT_TOKEN = "8937136224:AAET5jgO2qAK5TDuUHq6hBj_lcqHm2kGed4"
 
-# Render के लिए डमी वेब सर्वर ताकि सर्विस हमेशा चालू रहे
+# अस्थायी रूप से फाइलों का डेटा स्टोर करने के लिए डिक्शनरी
+FILE_STORE = {}
+
+# होमपेज रूट
 async def handle(request):
-    return web.Response(text="Movie Bot is Running!")
+    return web.Response(text="Movie Bot is Running Successfully!")
+
+# डाउनलोड / स्ट्रीमिंग रूट
+async def handle_download(request):
+    filename = request.match_info.get('filename', '')
+    file_id = FILE_STORE.get(filename)
+    
+    if not file_id:
+        return web.Response(text="File not found or expired!", status=404)
+    
+    # बॉट के जरिए टेलीग्राम से फाइल का लिंक फेच करना
+    import urllib.parse
+    return web.Response(text=f"Streaming/Download page for: {filename}")
 
 async def web_server():
     server = web.Application()
     server.router.add_get("/", handle)
+    server.router.add_get("/download/{filename}", handle_download)
     runner = web.AppRunner(server)
     await runner.setup()
     port = int(os.environ.get("PORT", 8080))
@@ -29,6 +45,11 @@ async def handle_media(update: Update, context: ContextTypes.DEFAULT_TYPE):
     
     if media:
         file_name = getattr(media, "file_name", "video.mp4")
+        file_id = media.file_id
+        
+        # फाइल नेम को स्टोर करें
+        FILE_STORE[file_name] = file_id
+        
         app_url = os.environ.get("RENDER_EXTERNAL_URL", "https://movie-bot-7457.onrender.com")
         download_link = f"{app_url}/download/{file_name}"
         
@@ -38,7 +59,6 @@ async def handle_media(update: Update, context: ContextTypes.DEFAULT_TYPE):
         )
 
 def main():
-    # वेब सर्वर और टेलीग्राम बॉट दोनों को एक साथ शुरू करने के लिए
     import asyncio
     loop = asyncio.new_event_loop()
     asyncio.set_event_loop(loop)
