@@ -18,7 +18,7 @@ BOT_APPLICATION = None
 async def handle(request):
     return web.Response(text="Movie Bot is Running Successfully!")
 
-# वीडियो स्ट्रीमिंग रूट (क्लिक करते ही वीडियो प्ले/डाउनलोड होगा)
+# रीडायरेक्ट रूट (बड़ी से बड़ी फाइल को भी बिना एरर के सीधे टेलीग्राम सर्वर से प्ले/डाउनलोड कराएगा)
 async def handle_download(request):
     filename = request.match_info.get('filename', '')
     decoded_filename = urllib.parse.unquote(filename)
@@ -28,31 +28,14 @@ async def handle_download(request):
         return web.Response(text="File not found or expired!", status=404)
     
     try:
-        # टेलीग्राम से फाइल की जानकारी प्राप्त करें
         file_obj = await BOT_APPLICATION.bot.get_file(file_id)
         file_url = file_obj.file_path
-        
-        # aiohttp की मदद से टेलीग्राम सर्वर से वीडियो स्ट्रीम को यूजर के ब्राउज़र पर भेजें
-        import aiohttp
-        async def stream_generator():
-            async with aiohttp.ClientSession() as session:
-                async with session.get(file_url) as resp:
-                    async for chunk in resp.content.iter_any():
-                        yield chunk
-
-        response = web.StreamResponse()
-        response.content_type = 'video/mp4'
-        response.headers['Content-Disposition'] = f'inline; filename="{decoded_filename}"'
-        await response.prepare(request)
-        
-        async for chunk in stream_generator():
-            await response.write(chunk)
-            
-        await response.write_eof()
-        return response
-        
+        # यूजर को सीधे टेलीग्राम के ऑफिशियल फास्ट सर्वर पर रीडायरेक्ट कर देगा (कोई साइज़ लिमिट नहीं!)
+        raise web.HTTPFound(file_url)
+    except web.HTTPFound as e:
+        raise e
     except Exception as e:
-        return web.Response(text=f"Error streaming file: {str(e)}", status=500)
+        return web.Response(text=f"Error redirecting file: {str(e)}", status=500)
 
 async def web_server():
     server = web.Application()
@@ -80,7 +63,7 @@ async def handle_media(update: Update, context: ContextTypes.DEFAULT_TYPE):
         download_link = f"{app_url}/download/{encoded_filename}"
         
         await message.reply_text(
-            f"✅ **लिंक तैयार है!**\n\n📁 **फाइल नाम:** `{file_name}`\n🔗 **ऑनलाइन प्ले / डायरेक्ट लिंक:**\n`{download_link}`",
+            f"✅ **लिंक तैयार है!**\n\n📁 **फाइल नाम:** `{file_name}`\n🔗 **डायरेक्ट डाउनलोड / प्ले लिंक:**\n`{download_link}`",
             parse_mode="Markdown"
         )
 
@@ -90,11 +73,9 @@ def main():
     loop = asyncio.new_event_loop()
     asyncio.set_event_loop(loop)
     
-    # टेलीग्राम बॉट एप्लीकेशन बनाएं
     BOT_APPLICATION = ApplicationBuilder().token(BOT_TOKEN).build()
     BOT_APPLICATION.add_handler(MessageHandler(filters.VIDEO | filters.Document.ALL | filters.FORWARDED, handle_media))
     
-    # वेब सर्वर शुरू करें
     loop.run_until_complete(web_server())
     
     print("Telegram Bot Started Successfully!")
