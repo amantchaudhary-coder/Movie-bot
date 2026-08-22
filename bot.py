@@ -1,4 +1,5 @@
 import os
+import asyncio
 from aiohttp import web
 from pyrogram import Client, filters
 from pyrogram.types import Message
@@ -14,7 +15,7 @@ app = Client(
     bot_token=BOT_TOKEN
 )
 
-# Render के लिए डमी वेब सर्वर ताकि सर्विस बंद न हो
+# Render के लिए डमी वेब सर्वर
 async def handle(request):
     return web.Response(text="Movie Bot is Running!")
 
@@ -36,7 +37,7 @@ async def link_generator(client, message: Message):
     media = message.video or message.document
     file_name = media.file_name if hasattr(media, "file_name") else "video.mp4"
     
-    file_path = await client.download_media(message)
+    await client.download_media(message)
     app_url = os.environ.get("RENDER_EXTERNAL_URL", "https://movie-bot-7457.onrender.com")
     download_link = f"{app_url}/download/{file_name}"
     
@@ -45,8 +46,11 @@ async def link_generator(client, message: Message):
         quote=True
     )
 
+async def main():
+    await web_server()
+    await app.start()
+    print("Bot Started Successfully!")
+    await asyncio.Event().wait()
+
 if __name__ == "__main__":
-    import asyncio
-    loop = asyncio.get_event_loop()
-    loop.create_task(web_server())
-    app.run()
+    asyncio.run(main())
