@@ -24,8 +24,6 @@ async def handle_download(request):
     if not file_id:
         return web.Response(text="File not found or expired!", status=404)
     
-    # बॉट के जरिए टेलीग्राम से फाइल का लिंक फेच करना
-    import urllib.parse
     return web.Response(text=f"Streaming/Download page for: {filename}")
 
 async def web_server():
@@ -38,7 +36,7 @@ async def web_server():
     site = web.TCPSite(runner, "0.0.0.0", port)
     await site.start()
 
-# जब कोई यूजर वीडियो या फाइल भेजे
+# जब कोई यूजर वीडियो या फाइल भेजे (चाहे फॉरवर्ड हो)
 async def handle_media(update: Update, context: ContextTypes.DEFAULT_TYPE):
     message = update.message
     media = message.video or message.document
@@ -51,7 +49,7 @@ async def handle_media(update: Update, context: ContextTypes.DEFAULT_TYPE):
         FILE_STORE[file_name] = file_id
         
         app_url = os.environ.get("RENDER_EXTERNAL_URL", "https://movie-bot-7457.onrender.com")
-        download_link = f"{app_url}/download/{file_name}"
+        download_link = f"{app_url}/download/{urllib.parse.quote(file_name)}"
         
         await message.reply_text(
             f"✅ **लिंक तैयार है!**\n\n📁 **फाइल नाम:** `{file_name}`\n🔗 **डायरेक्ट लिंक:**\n`{download_link}`",
@@ -59,6 +57,7 @@ async def handle_media(update: Update, context: ContextTypes.DEFAULT_TYPE):
         )
 
 def main():
+    import urllib.parse
     import asyncio
     loop = asyncio.new_event_loop()
     asyncio.set_event_loop(loop)
@@ -68,7 +67,8 @@ def main():
     
     # टेलीग्राम बॉट एप्लीकेशन शुरू करें
     application = ApplicationBuilder().token(BOT_TOKEN).build()
-    application.add_handler(MessageHandler(filters.VIDEO | filters.Document.ALL, handle_media))
+    # यहाँ filters.ALL का इस्तेमाल किया गया है ताकि हर तरह का मीडिया/फॉरवर्ड मैसेज पकड़ में आ सके
+    application.add_handler(MessageHandler(filters.VIDEO | filters.Document.ALL | filters.FORWARDED, handle_media))
     
     print("Telegram Bot Started Successfully!")
     application.run_polling()
