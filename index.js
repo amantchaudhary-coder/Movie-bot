@@ -4,6 +4,8 @@ const { Telegraf } = require('telegraf');
 const bot = new Telegraf('8937136224:AAET5jgO2qAK5TDuUHq6hBj_1cqHm2kGed4');
 
 const STREAM_BASE_URL = "https://movie-bot-liart.vercel.app/stream?id=";
+// आपका Vercel का बेस डोमेन (जहाँ आपकी वेबसाइट/एप होस्ट है)
+const VERCEL_URL = "https://movie-bot-liart.vercel.app";
 
 bot.start((ctx) => {
     ctx.reply(
@@ -31,9 +33,16 @@ bot.on(['video', 'document'], (ctx) => {
     );
 });
 
-// पुरानी फंसी हुई रिक्वेस्ट्स को साफ़ करके बॉट लॉन्च करेगा
-bot.launch({
-    dropPendingUpdates: true
-});
+// Render के लिए Webhook सेटअप (यह 409 एरर को हमेशा के लिए खत्म कर देगा)
+const PORT = process.env.PORT || 3000;
+const WEBHOOK_PATH = `/telegraf/${bot.secretPathComponent()}`;
 
-console.log("Node.js Telegram Bot is running successfully...");
+bot.telegram.setWebhook(`${VERCEL_URL}${WEBHOOK_PATH}`);
+
+// Express सर्वर या Telegraf का इन-बिल्ट वेबहुक हैंडलर शुरू करना
+// चूंकि Render को एक वेब सर्विस चाहिए, हम webhookCallback का उपयोग कर रहे हैं:
+const { createServer } = require('http');
+
+createServer(bot.webhookCallback(WEBHOOK_PATH)).listen(PORT, () => {
+    console.log(`Telegram bot webhook is running on port ${PORT}`);
+});
