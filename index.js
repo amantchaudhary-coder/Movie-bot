@@ -16,7 +16,7 @@ app.get('/stream', async (req, res) => {
     const apiData = await apiRes.json();
 
     if (!apiData.ok || !apiData.result.file_path) {
-      return res.status(500).send("Telegram API Error");
+      return res.status(500).send("Telegram API Error: " + (apiData.description || "Invalid file"));
     }
 
     const filePath = apiData.result.file_path;
