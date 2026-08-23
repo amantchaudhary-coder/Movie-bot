@@ -3,11 +3,11 @@ const { Telegraf } = require('telegraf');
 // आपका असली बॉट टोकन
 const bot = new Telegraf('8937136224:AAET5jgO2qAK5TDuUHq6hBj_1cqHm2kGed4');
 
-// यहाँ /api/ जोड़ दिया गया है ताकि Vercel की stream.js फाइल सही से काम करे
+// Vercel का स्ट्रीमिंग बेस यूआरएल (वीडियो स्ट्रीम करने के लिए)
 const STREAM_BASE_URL = "https://movie-bot-liart.vercel.app/api/stream?id=";
 
-// आपका Vercel का बेस डोमेन (जहाँ आपकी वेबसाइट/एप होस्ट है)
-const VERCEL_URL = "https://movie-bot-liart.vercel.app";
+// Render का यूआरएल (जहाँ आपका बॉट होस्ट है)
+const RENDER_URL = "https://movie-bot-7457.onrender.com";
 
 bot.start((ctx) => {
     ctx.reply(
@@ -17,6 +17,8 @@ bot.start((ctx) => {
 
 bot.on(['video', 'document'], (ctx) => {
     const media = ctx.message.video || ctx.message.document;
+    if (!media) return;
+    
     const fileId = media.file_id;
     const fileName = media.file_name || "video.mp4";
     
@@ -39,9 +41,8 @@ bot.on(['video', 'document'], (ctx) => {
 const PORT = process.env.PORT || 3000;
 const WEBHOOK_PATH = `/telegraf/${bot.secretPathComponent()}`;
 
-bot.telegram.setWebhook(`${VERCEL_URL}${WEBHOOK_PATH}`);
+bot.telegram.setWebhook(`${RENDER_URL}${WEBHOOK_PATH}`);
 
-// Express सर्वर या Telegraf का इन-बिल्ट वेबहुक हैंडलर शुरू करना
 const { createServer } = require('http');
 
 createServer(bot.webhookCallback(WEBHOOK_PATH)).listen(PORT, () => {
