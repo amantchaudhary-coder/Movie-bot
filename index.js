@@ -32,4 +32,4 @@ bot.on(['video', 'document'], (ctx) => {
 });
 
 bot.launch();
-console.log("Node.js Telegram Bot is running...");
+console.log("Node.js Telegram Bot is running successfully...");
