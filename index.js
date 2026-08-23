@@ -19,7 +19,7 @@ bot.on(['video', 'document'], (ctx) => {
     const streamLink = `${STREAM_BASE_URL}${fileId}`;
     
     ctx.reply(
-        `📂 **File Name:** \`${fileName}\`\n\n🔗 **Stream Link:**\n\`${stream_link}\``,
+        `📂 **File Name:** \`${fileName}\`\n\n🔗 **Stream Link:**\n\`${streamLink}\``,
         {
             parse_mode: 'Markdown',
             reply_markup: {
@@ -31,5 +31,9 @@ bot.on(['video', 'document'], (ctx) => {
     );
 });
 
-bot.launch();
+// पुरानी फंसी हुई रिक्वेस्ट्स को साफ़ करके बॉट लॉन्च करेगा
+bot.launch({
+    dropPendingUpdates: true
+});
+
 console.log("Node.js Telegram Bot is running successfully...");
