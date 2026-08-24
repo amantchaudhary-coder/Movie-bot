@@ -4,7 +4,7 @@ const axios = require('axios');
 
 const BOT_TOKEN = '8937136224:AAET5jgO2qAK5TDuUHq6hBj_1cqHm2kGed4';
 const bot = new Telegraf(BOT_TOKEN);
-const RENDER_URL = "https://movie-bot-7457.onrender.com";
+const RENDER_URL = "http://15.235.145.222:3000";
 
 const app = express();
 const PORT = process.env.PORT || 3000;
